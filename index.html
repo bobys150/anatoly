@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Робот Анатолий — Автономный эко-робот</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;900&family=Noto+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080e0a;
+    --surface: rgba(12, 28, 18, 0.7);
+    --green: #1aff7a;
+    --green-dim: #0d7a3a;
+    --green-glow: rgba(26, 255, 122, 0.15);
+    --amber: #f5c842;
+    --text: #d4f0dc;
+    --muted: #5a7a63;
+    --border: rgba(26, 255, 122, 0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+  .bg-mesh {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,255,122,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(13,122,58,0.08) 0%, transparent 70%);
+  }
+  .grid-bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(26,255,122,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,255,122,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 1.1rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(8,14,10,0.75); backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border);
+    animation: slideDown 0.8s ease both;
+  }
+  @keyframes slideDown { from{transform:translateY(-100%);opacity:0;} to{transform:none;opacity:1;} }
+
+  .nav-logo {
+    font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 1rem;
+    color: #fff; letter-spacing: 0.04em; text-decoration: none;
+  }
+  .nav-logo em { color: var(--green); font-style: normal; }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--green); }
+
+  section { position: relative; z-index: 2; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+    padding: 8rem 10vw 4rem; overflow: hidden;
+  }
+
+  .hero-tag {
+    font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--green); border: 1px solid var(--green-dim);
+    padding: 0.35rem 1rem; border-radius: 100px; margin-bottom: 2.5rem;
+    animation: fadeUp 1s 0.2s both; backdrop-filter: blur(8px);
+    background: var(--green-glow); display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+
+  .hero-title {
+    font-family: 'Unbounded', sans-serif; font-weight: 900;
+    font-size: clamp(3rem, 8.5vw, 8.5rem);
+    line-height: 0.95; letter-spacing: -0.02em; color: #fff;
+    animation: fadeUp 1s 0.4s both;
+  }
+  .hero-title .g { color: var(--green); }
+  .hero-title .sub {
+    display: block; font-size: 0.28em; font-weight: 300; color: var(--muted);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-top: 0.6em;
+  }
+
+  .hero-sub {
+    margin-top: 2rem; max-width: 480px;
+    font-size: 0.98rem; line-height: 1.75; color: var(--muted);
+    animation: fadeUp 1s 0.6s both;
+  }
+  .hero-cta { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; animation: fadeUp 1s 0.8s both; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    padding: 0.85rem 1.9rem; border-radius: 6px;
+    font-family: 'Unbounded', sans-serif; font-size: 0.7rem;
+    font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+    transition: all 0.25s ease;
+  }
+  .btn-primary { background: var(--green); color: #050e08; border: none; }
+  .btn-primary:hover { background: #4fffaa; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(26,255,122,0.35); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); backdrop-filter: blur(8px); }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); transform: translateY(-2px); }
+
+  /* Photo gallery */
+  #gallery { border-top: 1px solid var(--border); }
+  .photo-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 3rem;
+  }
+  .photo-slot {
+    position: relative; border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border); aspect-ratio: 4/3;
+    background: var(--surface); backdrop-filter: blur(12px);
+    transition: border-color 0.3s, transform 0.3s;
+    cursor: pointer;
+  }
+  .photo-slot:hover { border-color: var(--green-dim); transform: translateY(-4px); }
+  .photo-slot img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.5s ease, opacity 0.3s;
+  }
+  .photo-slot:hover img { transform: scale(1.04); }
+  /* Placeholder state (no image loaded) */
+  .photo-slot.empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.8rem;
+  }
+  .photo-slot.empty::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 20px,
+      rgba(26,255,122,0.02) 20px, rgba(26,255,122,0.02) 40px
+    );
+  }
+  .photo-placeholder-icon { font-size: 2rem; opacity: 0.25; }
+  .photo-placeholder-text {
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); text-align: center; position: relative; z-index: 1;
+  }
+  .photo-num {
+    position: absolute; top: 1rem; left: 1rem;
+    font-family: 'Unbounded', sans-serif; font-size: 0.65rem; font-weight: 600;
+    color: var(--green); letter-spacing: 0.1em;
+    background: rgba(8,14,10,0.7); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); padding: 0.2rem 0.6rem; border-radius: 4px;
+    z-index: 2;
+  }
+  .photo-caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 1.2rem 1rem 0.8rem;
+    background: linear-gradient(transparent, rgba(8,14,10,0.92));
+    font-size: 0.78rem; color: var(--text); z-index: 2;
+    transform: translateY(100%); transition: transform 0.3s ease;
+  }
+  .photo-slot:hover .photo-caption { transform: none; }
+
+  /* Lightbox */
+  #lightbox {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(4,8,5,0.95); backdrop-filter: blur(24px);
+    align-items: center; justify-content: center;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 88vw; max-height: 85vh; border-radius: 8px; border: 1px solid var(--border); }
+  #lightbox-close {
+    position: absolute; top: 2rem; right: 2rem;
+    background: none; border: 1px solid var(--border); color: var(--text);
+    width: 40px; height: 40px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px); transition: border-color 0.2s, color 0.2s;
+  }
+  #lightbox-close:hover { border-color: var(--green); color: var(--green); }
+
+  /* TICKER */
+  .ticker-wrap {
+    width: 100%; overflow: hidden;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 0.85rem 0; background: rgba(26,255,122,0.02);
+    animation: fadeUp 1s 1s both; position: relative; z-index: 2;
+  }
+  .ticker { display: flex; white-space: nowrap; animation: ticker 28s linear infinite; }
+  .ticker span { font-family: 'Unbounded', sans-serif; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); padding: 0 2rem; }
+  .ticker span.dot { color: var(--green); }
+  @keyframes ticker { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:none;} }
+
+  /* SECTIONS */
+  .section-inner { max-width: 1200px; margin: 0 auto; padding: 6rem 3rem; }
+  .section-label {
+    font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--green); margin-bottom: 0.8rem;
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .section-label::before { content:''; width:24px; height:1px; background:var(--green); }
+  .section-title {
+    font-family: 'Unbounded', sans-serif; font-weight: 900;
+    font-size: clamp(1.7rem, 3.5vw, 2.8rem); line-height: 1.1; margin-bottom: 1.5rem;
+  }
+
+  /* PROBLEM */
+  #problem { border-top: 1px solid var(--border); }
+  .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 3rem; }
+  .prob-card {
+    background: var(--surface); backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: 12px; padding: 2rem;
+    position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.3s;
+  }
+  .prob-card:hover { border-color: var(--green-dim); transform: translateY(-4px); }
+  .prob-card::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at top left, var(--green-glow) 0%, transparent 60%); opacity:0; transition:opacity 0.3s; }
+  .prob-card:hover::before { opacity:1; }
+  .prob-num { font-family:'Unbounded',sans-serif; font-size:2.2rem; font-weight:900; color:var(--green); opacity:0.15; line-height:1; margin-bottom:0.8rem; }
+  .prob-title { font-family:'Unbounded',sans-serif; font-size:0.82rem; font-weight:600; color:#fff; margin-bottom:0.6rem; }
+  .prob-text { font-size:0.84rem; line-height:1.65; color:var(--muted); }
+
+  /* SOLUTION */
+  #solution { border-top: 1px solid var(--border); }
+  .solution-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; margin-top: 3rem; }
+  .spec-list { list-style: none; margin-top: 1.5rem; }
+  .spec-list li { display:flex; align-items:flex-start; gap:1rem; padding:0.85rem 0; border-bottom:1px solid var(--border); font-size:0.87rem; color:var(--muted); line-height:1.5; }
+  .spec-list li:last-child { border-bottom:none; }
+  .spec-list .ico { width:20px; flex-shrink:0; margin-top:1px; }
+  .spec-list strong { color:var(--text); font-weight:400; }
+  .tech-tags { display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:2rem; }
+  .tag { font-size:0.7rem; font-family:'Unbounded',sans-serif; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; padding:0.4rem 0.85rem; border-radius:4px; background:rgba(26,255,122,0.05); border:1px solid var(--border); color:var(--green); }
+  .solution-vis { position:relative; aspect-ratio:1; }
+  .glow-circle { position:absolute; inset:10%; border-radius:50%; background:radial-gradient(circle, rgba(26,255,122,0.07) 0%, transparent 70%); animation:pulse 3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.6;} 50%{transform:scale(1.1);opacity:1;} }
+
+  /* STATS */
+  #stats { border-top: 1px solid var(--border); background: rgba(26,255,122,0.02); }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; margin-top:3rem; }
+  .stat-box { padding:2.5rem 2rem; background:var(--surface); backdrop-filter:blur(12px); text-align:center; }
+  .stat-box:first-child { border-radius:12px 0 0 12px; }
+  .stat-box:last-child { border-radius:0 12px 12px 0; }
+  .stat-num { font-family:'Unbounded',sans-serif; font-size:2.6rem; font-weight:900; color:var(--green); line-height:1; }
+  .stat-unit { font-size:1.1rem; }
+  .stat-label { font-size:0.72rem; color:var(--muted); margin-top:0.5rem; letter-spacing:0.08em; text-transform:uppercase; }
+
+
+
+  /* TEAM */
+  #contacts { border-top: 1px solid var(--border); }
+  .team-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:3rem; }
+  .team-card { background:var(--surface); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:14px; padding:2.2rem; transition:all 0.3s; position:relative; overflow:hidden; }
+  .team-card:hover { border-color:var(--green-dim); transform:translateY(-4px); }
+  .team-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--green),transparent); opacity:0; transition:opacity 0.3s; }
+  .team-card:hover::after { opacity:1; }
+  .team-role { font-size:0.66rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--green); margin-bottom:0.6rem; }
+  .team-name { font-family:'Unbounded',sans-serif; font-size:1.05rem; font-weight:600; color:#fff; margin-bottom:1.5rem; }
+  .contact-links { list-style:none; display:flex; flex-direction:column; gap:0.7rem; }
+  .contact-links li { display:flex; align-items:center; gap:0.75rem; }
+  .contact-links a,.contact-links span { font-size:0.82rem; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+  .contact-links a:hover { color:var(--green); }
+
+  footer { border-top:1px solid var(--border); position:relative; z-index:2; padding:2.5rem 3rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; font-size:0.76rem; color:var(--muted); }
+  .footer-logo { font-family:'Unbounded',sans-serif; font-size:0.82rem; font-weight:900; color:var(--green); }
+
+  .reveal { opacity:0; transform:translateY(28px); transition:opacity 0.7s ease,transform 0.7s ease; }
+  .reveal.visible { opacity:1; transform:none; }
+
+  @media (max-width:900px) {
+    nav { padding:1rem 1.5rem; }
+    .nav-links { display:none; }
+    .hero-visual { display:none; }
+    #hero { padding:7rem 1.5rem 3rem; }
+    .section-inner { padding:4rem 1.5rem; }
+    .problem-grid,.solution-layout,.team-grid { grid-template-columns:1fr; }
+    .stats-row { grid-template-columns:1fr 1fr; }
+    .stat-box:first-child { border-radius:12px 12px 0 0; }
+    .stat-box:last-child { border-radius:0 0 12px 12px; }
+    footer { flex-direction:column; text-align:center; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="grid-bg"></div>
+
+<nav>
+  <a class="nav-logo" href="#hero">АНАТО<em>ЛИЙ</em></a>
+  <ul class="nav-links">
+    <li><a href="#problem">Проблема</a></li>
+    <li><a href="#solution">Решение</a></li>
+    <li><a href="#stats">Параметры</a></li>
+
+    <li><a href="#contacts">Контакты</a></li>
+  </ul>
+</nav>
+
+<section id="hero">
+  <div class="hero-tag">
+    <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#1aff7a"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/></circle></svg>
+    Экологический робототехнический проект
+  </div>
+
+  <h1 class="hero-title">
+    РОБОТ<br><span class="g">АНАТОЛИЙ</span>
+    <span class="sub">автономный сортировщик отходов</span>
+  </h1>
+
+  <p class="hero-sub">
+    Гусеничный робот для сбора и сортировки мусора в коттеджных поселках.
+    Вызывается через приложение, подъезжает прямо к дому.
+    Управляется из любой точки мира через 4G.
+  </p>
+
+  <div class="hero-cta">
+    <a href="#solution" class="btn btn-primary">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      Узнать больше
+    </a>
+
+  </div>
+
+  <!-- (infographic removed) -->
+  <div style="display:none" aria-hidden="true">
+    <svg viewBox="0 0 1 1" style="display:none">
+      <defs>
+        <radialGradient id="gr1" cx="50%" cy="75%" r="50%">
+          <stop offset="0%" stop-color="#1aff7a" stop-opacity="0.13"/>
+          <stop offset="100%" stop-color="#1aff7a" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow1"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- Ground shadow -->
+      <ellipse cx="260" cy="305" rx="210" ry="18" fill="url(#gr1)"/>
+
+      <!-- ══ TRACK BELT (full width) ══ -->
+      <rect x="46" y="228" width="428" height="66" rx="33" fill="#061410" stroke="#1aff7a" stroke-width="1.6"/>
+      <rect x="80" y="240" width="360" height="42" rx="21" fill="none" stroke="#0d7a3a" stroke-width="0.9" stroke-dasharray="15 6"/>
+      <!-- Track link studs -->
+      <g fill="#1aff7a" opacity="0.3">
+        <rect x="98"  y="229" width="9" height="5" rx="1.5"/>
+        <rect x="117" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="136" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="155" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="174" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="193" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="212" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="231" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="250" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="269" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="288" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="307" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="326" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="345" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="364" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="383" y="229" width="9" height="5" rx="1.5"/>
+        <rect x="402" y="229" width="9" height="5" rx="1.5"/>
+      </g>
+
+      <!-- ══ REAR SPROCKET WHEEL (right) ══ -->
+      <circle cx="436" cy="261" r="46" fill="#0a1a10" stroke="#1aff7a" stroke-width="2" filter="url(#glow1)"/>
+      <circle cx="436" cy="261" r="33" fill="none" stroke="#1aff7a" stroke-width="1.4"/>
+      <!-- Spokes -->
+      <g stroke="#1aff7a" stroke-width="1.6" opacity="0.7">
+        <line x1="436" y1="228" x2="436" y2="214"/><line x1="436" y1="294" x2="436" y2="308"/>
+        <line x1="403" y1="261" x2="389" y2="261"/><line x1="469" y1="261" x2="483" y2="261"/>
+        <line x1="413" y1="238" x2="403" y2="228"/><line x1="459" y1="284" x2="469" y2="294"/>
+        <line x1="413" y1="284" x2="403" y2="294"/><line x1="459" y1="238" x2="469" y2="228"/>
+      </g>
+      <!-- Gear teeth -->
+      <g fill="#1aff7a" opacity="0.45">
+        <rect x="430" y="212" width="12" height="8" rx="2"/>
+        <rect x="430" y="302" width="12" height="8" rx="2"/>
+        <rect x="387" y="255" width="8" height="12" rx="2"/>
+        <rect x="477" y="255" width="8" height="12" rx="2"/>
+        <rect x="396" y="221" width="10" height="7" rx="2" transform="rotate(45 401 224)"/>
+        <rect x="458" y="289" width="10" height="7" rx="2" transform="rotate(45 463 293)"/>
+        <rect x="396" y="290" width="10" height="7" rx="2" transform="rotate(-45 401 294)"/>
+        <rect x="458" y="221" width="10" height="7" rx="2" transform="rotate(-45 463 224)"/>
+      </g>
+      <circle cx="436" cy="261" r="10" fill="#1aff7a" opacity="0.85"/>
+      <circle cx="436" cy="261" r="5" fill="#061410"/>
+
+      <!-- ══ FRONT SPROCKET WHEEL (left) ══ -->
+      <circle cx="84" cy="261" r="46" fill="#0a1a10" stroke="#1aff7a" stroke-width="2" filter="url(#glow1)"/>
+      <circle cx="84" cy="261" r="33" fill="none" stroke="#1aff7a" stroke-width="1.4"/>
+      <g stroke="#1aff7a" stroke-width="1.6" opacity="0.7">
+        <line x1="84" y1="228" x2="84" y2="214"/><line x1="84" y1="294" x2="84" y2="308"/>
+        <line x1="51" y1="261" x2="37" y2="261"/><line x1="117" y1="261" x2="131" y2="261"/>
+        <line x1="61" y1="238" x2="51" y2="228"/><line x1="107" y1="284" x2="117" y2="294"/>
+        <line x1="61" y1="284" x2="51" y2="294"/><line x1="107" y1="238" x2="117" y2="228"/>
+      </g>
+      <g fill="#1aff7a" opacity="0.45">
+        <rect x="78" y="212" width="12" height="8" rx="2"/>
+        <rect x="78" y="302" width="12" height="8" rx="2"/>
+        <rect x="35" y="255" width="8" height="12" rx="2"/>
+        <rect x="125" y="255" width="8" height="12" rx="2"/>
+        <rect x="44" y="221" width="10" height="7" rx="2" transform="rotate(45 49 224)"/>
+        <rect x="106" y="289" width="10" height="7" rx="2" transform="rotate(45 111 293)"/>
+        <rect x="44" y="290" width="10" height="7" rx="2" transform="rotate(-45 49 294)"/>
+        <rect x="106" y="221" width="10" height="7" rx="2" transform="rotate(-45 111 224)"/>
+      </g>
+      <circle cx="84" cy="261" r="10" fill="#1aff7a" opacity="0.85"/>
+      <circle cx="84" cy="261" r="5" fill="#061410"/>
+
+      <!-- Middle idler -->
+      <circle cx="260" cy="263" r="19" fill="#061410" stroke="#0d7a3a" stroke-width="1.2"/>
+      <circle cx="260" cy="263" r="9" fill="none" stroke="#0d7a3a" stroke-width="0.9"/>
+      <circle cx="260" cy="263" r="3.5" fill="#0d7a3a" opacity="0.65"/>
+
+      <!-- ══ PLYWOOD BOX BODY ══ -->
+      <!-- Main rectangular box (wooden / plywood look) -->
+      <rect x="156" y="88" width="300" height="148" rx="5" fill="#071a0e" stroke="#1aff7a" stroke-width="1.6"/>
+      <!-- Plywood grain lines -->
+      <g stroke="#0d7a3a" stroke-width="0.6" opacity="0.35">
+        <line x1="156" y1="106" x2="456" y2="106"/>
+        <line x1="156" y1="124" x2="456" y2="124"/>
+        <line x1="156" y1="142" x2="456" y2="142"/>
+        <line x1="156" y1="160" x2="456" y2="160"/>
+        <line x1="156" y1="178" x2="456" y2="178"/>
+        <line x1="156" y1="196" x2="456" y2="196"/>
+        <line x1="156" y1="214" x2="456" y2="214"/>
+      </g>
+      <!-- Corner reinforcement brackets (laser-cut detail) -->
+      <path d="M156,88 L156,108 M156,88 L176,88" stroke="#1aff7a" stroke-width="2" opacity="0.5"/>
+      <path d="M456,88 L456,108 M456,88 L436,88" stroke="#1aff7a" stroke-width="2" opacity="0.5"/>
+      <path d="M156,236 L156,216 M156,236 L176,236" stroke="#1aff7a" stroke-width="2" opacity="0.5"/>
+      <path d="M456,236 L456,216 M456,236 L436,236" stroke="#1aff7a" stroke-width="2" opacity="0.5"/>
+
+      <!-- 4 sorting compartments inside box -->
+      <rect x="166" y="98"  width="68" height="128" rx="3" fill="#050f08" stroke="#1aff7a" stroke-width="1"/>
+      <rect x="242" y="98"  width="68" height="128" rx="3" fill="#050f08" stroke="#1aff7a" stroke-width="1"/>
+      <rect x="318" y="98"  width="68" height="128" rx="3" fill="#050f08" stroke="#1aff7a" stroke-width="1"/>
+      <rect x="394" y="98"  width="54" height="128" rx="3" fill="#050f08" stroke="#1aff7a" stroke-width="1"/>
+      <!-- Compartment icons -->
+      <text x="200" y="148" text-anchor="middle" font-size="20" opacity="0.45">♻</text>
+      <text x="276" y="148" text-anchor="middle" font-size="20" opacity="0.45">🍃</text>
+      <text x="352" y="148" text-anchor="middle" font-size="20" opacity="0.45">🥤</text>
+      <text x="421" y="148" text-anchor="middle" font-size="20" opacity="0.45">⚙</text>
+      <!-- Compartment labels -->
+      <text x="200" y="172" text-anchor="middle" font-size="9" fill="#1aff7a" opacity="0.8" font-family="monospace" font-weight="bold">ПЛА</text>
+      <text x="276" y="172" text-anchor="middle" font-size="9" fill="#1aff7a" opacity="0.8" font-family="monospace" font-weight="bold">ОРГ</text>
+      <text x="352" y="172" text-anchor="middle" font-size="9" fill="#1aff7a" opacity="0.8" font-family="monospace" font-weight="bold">СТЕ</text>
+      <text x="421" y="172" text-anchor="middle" font-size="9" fill="#1aff7a" opacity="0.8" font-family="monospace" font-weight="bold">МЕТ</text>
+
+      <!-- Servo hinge on top of box (lid mechanism) -->
+      <rect x="240" y="84" width="50" height="8" rx="4" fill="#0d7a3a" stroke="#1aff7a" stroke-width="0.8" opacity="0.8"/>
+      <circle cx="265" cy="88" r="3" fill="#1aff7a" opacity="0.6"/>
+
+      <!-- ══ RED ROUNDED NOSE (front section / 3D printed) ══ -->
+      <!-- Outer rounded front shape -->
+      <path d="M156,236 L156,104 Q156,72 128,64 Q94,54 72,78 Q48,104 48,161 Q48,218 72,240 Q94,256 126,248 Z"
+            fill="#071a0e" stroke="#1aff7a" stroke-width="1.6"/>
+      <!-- Inner layered detail (3D printed wall look) -->
+      <path d="M148,228 L148,112 Q148,86 126,78 Q100,70 82,92 Q62,114 62,161 Q62,208 82,228 Q102,246 126,240 Z"
+            fill="none" stroke="#0d7a3a" stroke-width="0.9" opacity="0.55"/>
+      <path d="M140,220 L140,120 Q140,100 122,94 Q104,88 90,106 Q76,124 76,161 Q76,198 90,216 Q106,232 124,228 Z"
+            fill="none" stroke="#0d7a3a" stroke-width="0.6" opacity="0.3"/>
+
+      <!-- Pi Camera main lens -->
+      <circle cx="106" cy="148" r="26" fill="#040e07" stroke="#1aff7a" stroke-width="2" filter="url(#glow1)"/>
+      <circle cx="106" cy="148" r="19" fill="#061410" stroke="#1aff7a" stroke-width="1.2"/>
+      <circle cx="106" cy="148" r="12" fill="#0d2a18"/>
+      <circle cx="106" cy="148" r="7" fill="#1aff7a" opacity="0.88"/>
+      <circle cx="106" cy="148" r="3" fill="#061410"/>
+      <circle cx="109" cy="145" r="2.2" fill="white" opacity="0.65"/>
+      <!-- Lens rings -->
+      <circle cx="106" cy="148" r="15" fill="none" stroke="#1aff7a" stroke-width="0.5" opacity="0.35"/>
+      <circle cx="106" cy="148" r="22" fill="none" stroke="#1aff7a" stroke-width="0.4" opacity="0.2"/>
+
+      <!-- Ultrasonic sensor (lower) -->
+      <circle cx="106" cy="200" r="11" fill="#040e07" stroke="#0d7a3a" stroke-width="1.2"/>
+      <circle cx="106" cy="200" r="7" fill="#061410" stroke="#0d7a3a" stroke-width="0.8"/>
+      <circle cx="106" cy="200" r="3.5" fill="#0d7a3a" opacity="0.75"/>
+
+      <!-- LED status row -->
+      <circle cx="84" cy="110" r="5.5" fill="#1aff7a"><animate attributeName="opacity" values="1;0.2;1" dur="1.8s" begin="0s" repeatCount="indefinite"/></circle>
+      <circle cx="100" cy="110" r="5.5" fill="#f5c842"><animate attributeName="opacity" values="1;0.2;1" dur="1.8s" begin="0.5s" repeatCount="indefinite"/></circle>
+      <circle cx="116" cy="110" r="5.5" fill="#1aff7a"><animate attributeName="opacity" values="1;0.2;1" dur="1.8s" begin="1s" repeatCount="indefinite"/></circle>
+
+      <!-- Antenna -->
+      <line x1="130" y1="76" x2="142" y2="36" stroke="#1aff7a" stroke-width="1.6"/>
+      <circle cx="143" cy="33" r="5.5" fill="#1aff7a" filter="url(#glow1)">
+        <animate attributeName="opacity" values="1;0.1;1" dur="1.5s" repeatCount="indefinite"/>
+        <animate attributeName="r" values="5.5;8;5.5" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- ══ INFO CHIPS above body ══ -->
+      <!-- 4G chip -->
+      <rect x="164" y="54" width="58" height="28" rx="4" fill="#040e07" stroke="#0d7a3a" stroke-width="1"/>
+      <text x="193" y="66" text-anchor="middle" font-size="7.5" fill="#1aff7a" font-family="monospace" font-weight="bold">4G LTE</text>
+      <text x="193" y="76" text-anchor="middle" font-size="6" fill="#5a7a63" font-family="monospace">MODEM</text>
+
+      <!-- RPi chip -->
+      <rect x="232" y="54" width="64" height="28" rx="4" fill="#040e07" stroke="#0d7a3a" stroke-width="1"/>
+      <text x="264" y="66" text-anchor="middle" font-size="7.5" fill="#1aff7a" font-family="monospace" font-weight="bold">RPi 3B</text>
+      <text x="264" y="76" text-anchor="middle" font-size="6" fill="#5a7a63" font-family="monospace">ANATOLY</text>
+
+      <!-- Battery chip -->
+      <rect x="306" y="54" width="60" height="28" rx="4" fill="#040e07" stroke="#0d7a3a" stroke-width="1"/>
+      <text x="336" y="65" text-anchor="middle" font-size="7.5" fill="#1aff7a" font-family="monospace" font-weight="bold">18650</text>
+      <text x="336" y="76" text-anchor="middle" font-size="6" fill="#5a7a63" font-family="monospace">3× LI-ION</text>
+
+      <!-- YOLO chip -->
+      <rect x="376" y="54" width="58" height="28" rx="4" fill="#040e07" stroke="#0d7a3a" stroke-width="1"/>
+      <text x="405" y="65" text-anchor="middle" font-size="7.5" fill="#1aff7a" font-family="monospace" font-weight="bold">YOLO</text>
+      <text x="405" y="76" text-anchor="middle" font-size="6" fill="#5a7a63" font-family="monospace">VISION</text>
+
+      <!-- Connector lines from chips to body -->
+      <line x1="193" y1="82" x2="193" y2="88" stroke="#0d7a3a" stroke-width="0.8" opacity="0.6" stroke-dasharray="3 2"/>
+      <line x1="264" y1="82" x2="264" y2="88" stroke="#0d7a3a" stroke-width="0.8" opacity="0.6" stroke-dasharray="3 2"/>
+      <line x1="336" y1="82" x2="336" y2="88" stroke="#0d7a3a" stroke-width="0.8" opacity="0.6" stroke-dasharray="3 2"/>
+      <line x1="405" y1="82" x2="405" y2="88" stroke="#0d7a3a" stroke-width="0.8" opacity="0.6" stroke-dasharray="3 2"/>
+
+      <!-- Scan animation -->
+      <line x1="48" y1="161" x2="480" y2="161" stroke="#1aff7a" stroke-width="0.8">
+        <animate attributeName="y1" values="96;290;96" dur="5.5s" repeatCount="indefinite"/>
+        <animate attributeName="y2" values="96;290;96" dur="5.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.3;0" dur="5.5s" repeatCount="indefinite"/>
+      </line>
+    </svg>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>Raspberry Pi 3B</span><span class="dot">✦</span>
+    <span>Pi Camera V1</span><span class="dot">✦</span>
+    <span>4G LTE Модем</span><span class="dot">✦</span>
+    <span>YOLO Segmentation</span><span class="dot">✦</span>
+    <span>18650 Li-Ion</span><span class="dot">✦</span>
+    <span>4 отсека сортировки</span><span class="dot">✦</span>
+    <span>Гусеничная платформа</span><span class="dot">✦</span>
+    <span>Управление из любой точки</span><span class="dot">✦</span>
+    <span>Raspberry Pi 3B</span><span class="dot">✦</span>
+    <span>Pi Camera V1</span><span class="dot">✦</span>
+    <span>4G LTE Модем</span><span class="dot">✦</span>
+    <span>YOLO Segmentation</span><span class="dot">✦</span>
+    <span>18650 Li-Ion</span><span class="dot">✦</span>
+    <span>4 отсека сортировки</span><span class="dot">✦</span>
+    <span>Гусеничная платформа</span><span class="dot">✦</span>
+    <span>Управление из любой точки</span><span class="dot">✦</span>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-inner">
+    <div class="section-label">Актуальность</div>
+    <h2 class="section-title reveal">Проблема вывоза мусора<br>в коттеджных поселках</h2>
+    <p class="reveal" style="color:var(--muted);max-width:560px;font-size:0.93rem;line-height:1.75;margin-bottom:0;">
+      Жители Московской области сталкиваются с серьёзными проблемами при выносе мусора —
+      нехватка контейнеров, неудобное расположение, полное отсутствие сортировки.
+    </p>
+    <div class="problem-grid">
+      <div class="prob-card reveal">
+        <div class="prob-num">01</div>
+        <div class="prob-title">Территориальный барьер</div>
+        <div class="prob-text">Путь до контейнерной площадки — до 30 минут пешком. Зимой перемещаться с отходами практически невозможно из-за снежных заносов и неочищенных дорог.</div>
+      </div>
+      <div class="prob-card reveal">
+        <div class="prob-num">02</div>
+        <div class="prob-title">Нехватка инфраструктуры</div>
+        <div class="prob-text">На поселок с сотнями домовладений — всего 1–2 площадки. Нерациональное расположение вдали от домов, полное отсутствие раздельных контейнеров.</div>
+      </div>
+      <div class="prob-card reveal">
+        <div class="prob-num">03</div>
+        <div class="prob-title">Экологические угрозы</div>
+        <div class="prob-text">Стихийные свалки в лесах, загрязнение почвы и грунтовых вод токсинами, гибель растительности и диких животных, высокая пожароопасность.</div>
+      </div>
+      <div class="prob-card reveal">
+        <div class="prob-num">04</div>
+        <div class="prob-title">Санитарные риски</div>
+        <div class="prob-text">Размножение грызунов-переносчиков болезней, токсичные выбросы при разложении органики и пластика, угроза загрязнения колодцев и скважин.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="section-inner">
+    <div class="solution-layout">
+      <div>
+        <div class="section-label">Наше решение</div>
+        <h2 class="section-title reveal">Автономный<br>робот-сортировщик</h2>
+        <p class="reveal" style="color:var(--muted);font-size:0.92rem;line-height:1.75;">
+          Анатолий вызывается через приложение, самостоятельно подъезжает к дому, забирает мусор и
+          раскладывает его по четырём раздельным отсекам. Корпус из фанеры и PETG-пластика.
+          Управление доступно из любой точки мира через 4G.
+        </p>
+        <ul class="spec-list reveal">
+          <li><span class="ico">⚙️</span><div><strong>Контроллер:</strong> Raspberry Pi 3B + Pi Camera V1</div></li>
+          <li><span class="ico">📡</span><div><strong>Связь:</strong> 4G LTE модем — управление откуда угодно</div></li>
+          <li><span class="ico">🔋</span><div><strong>Питание:</strong> 3× 18650 Li-Ion (11.1В последовательно)</div></li>
+          <li><span class="ico">🚗</span><div><strong>Движение:</strong> 2× DC 12В, резиновые гусеницы, L298N</div></li>
+          <li><span class="ico">📦</span><div><strong>Сортировка:</strong> 4 раздельных отсека, сервопривод MG996R</div></li>
+          <li><span class="ico">🧠</span><div><strong>ИИ:</strong> YOLO Segmentation для распознавания мусора</div></li>
+        </ul>
+        <div class="tech-tags reveal">
+          <span class="tag">Python</span>
+          <span class="tag">OpenCV</span>
+          <span class="tag">YOLO</span>
+          <span class="tag">Компас3Д</span>
+          <span class="tag">Linux</span>
+          <span class="tag">4G LTE</span>
+        </div>
+      </div>
+      <div class="solution-vis">
+        <div class="glow-circle"></div>
+        <svg viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;filter:drop-shadow(0 0 25px rgba(26,255,122,0.18))">
+          <rect x="40" y="40" width="240" height="240" rx="24" fill="#0a1f10" stroke="#1aff7a" stroke-width="1"/>
+          <path d="M40 120 H100 V80 H180" stroke="#0d7a3a" stroke-width="1.5" fill="none"/>
+          <path d="M280 160 H220 V240 H160" stroke="#0d7a3a" stroke-width="1.5" fill="none"/>
+          <path d="M120 40 V100 H80 V160" stroke="#0d7a3a" stroke-width="1.5" fill="none"/>
+          <path d="M200 280 V200 H260 V140" stroke="#0d7a3a" stroke-width="1.5" fill="none"/>
+          <circle cx="100" cy="120" r="4" fill="#1aff7a" opacity="0.6"/>
+          <circle cx="220" cy="160" r="4" fill="#1aff7a" opacity="0.6"/>
+          <circle cx="120" cy="100" r="4" fill="#f5c842" opacity="0.8"/>
+          <circle cx="200" cy="200" r="4" fill="#1aff7a" opacity="0.6"/>
+          <rect x="110" y="110" width="100" height="100" rx="10" fill="#061710" stroke="#1aff7a" stroke-width="1.5"/>
+          <rect x="124" y="124" width="72" height="72" rx="6" fill="#0a1f10" stroke="#0d7a3a" stroke-width="1"/>
+          <text x="160" y="152" text-anchor="middle" font-size="10" fill="#1aff7a" font-family="monospace" font-weight="bold">ANATOLY</text>
+          <text x="160" y="168" text-anchor="middle" font-size="8" fill="#5a7a63" font-family="monospace">v2.0 PETG</text>
+          <text x="160" y="183" text-anchor="middle" font-size="7" fill="#5a7a63" font-family="monospace">4G · 2025</text>
+          <g>
+            <rect x="105" y="128" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="105" y="138" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="105" y="148" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="105" y="158" width="6" height="4" rx="1" fill="#f5c842" opacity="0.5"/>
+            <rect x="105" y="168" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="209" y="128" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="209" y="138" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="209" y="148" width="6" height="4" rx="1" fill="#f5c842" opacity="0.5"/>
+            <rect x="209" y="158" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+            <rect x="209" y="168" width="6" height="4" rx="1" fill="#1aff7a" opacity="0.5"/>
+          </g>
+          <line x1="40" y1="160" x2="280" y2="160" stroke="#1aff7a" stroke-width="0.8" opacity="0.3">
+            <animateTransform attributeName="transform" type="translate" values="0,-120;0,120;0,-120" dur="4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.35;0" dur="4s" repeatCount="indefinite"/>
+          </line>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="section-inner">
+    <div class="section-label">Параметры прототипа</div>
+    <h2 class="section-title reveal">Цифры проекта</h2>
+    <div class="stats-row reveal">
+      <div class="stat-box">
+        <div class="stat-num">4<span class="stat-unit"> 📦</span></div>
+        <div class="stat-label">Отсека сортировки</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">12<span class="stat-unit">V</span></div>
+        <div class="stat-label">Напряжение питания</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">13<span class="stat-unit">к₽</span></div>
+        <div class="stat-label">Стоимость прототипа</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">4G<span class="stat-unit"> 🌐</span></div>
+        <div class="stat-label">Связь откуда угодно</div>
+      </div>
+    </div>
+    <p class="reveal" style="margin-top:2rem;color:var(--muted);font-size:0.8rem;text-align:center;">
+      Вдохновлено проектом DustBot (ЕС, 2006–2010) — первым роботом-курьером для сбора мусора прямо у домов жителей.
+    </p>
+  </div>
+</section>
+
+
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="section-inner">
+    <div class="section-label">Фотографии</div>
+    <h2 class="section-title reveal">Робот вживую</h2>
+    <p class="reveal" style="color:var(--muted);max-width:500px;font-size:0.9rem;line-height:1.75;margin-bottom:0;">
+      Прототип собран из фанеры и PETG-пластика. Лазерная резка ЧПУ + 3D-печать.
+    </p>
+
+    <div class="photo-grid">
+      <!-- Фото 1 — замени src на путь к своему файлу -->
+      <div class="photo-slot reveal" onclick="openLightbox(this)">
+        <span class="photo-num">01</span>
+        <img src="photo_1.jpg" alt="Робот Анатолий — вид сбоку"
+             onerror="this.parentElement.classList.add('empty');this.style.display='none'">
+        <div class="photo-placeholder-icon">📷</div>
+        <div class="photo-placeholder-text">Фото 01<br>вид сбоку</div>
+        <div class="photo-caption">Вид сбоку — гусеничная платформа</div>
+      </div>
+
+      <!-- Фото 2 -->
+      <div class="photo-slot reveal" onclick="openLightbox(this)">
+        <span class="photo-num">02</span>
+        <img src="photo_2.jpg" alt="Робот Анатолий — вид спереди"
+             onerror="this.parentElement.classList.add('empty');this.style.display='none'">
+        <div class="photo-placeholder-icon">📷</div>
+        <div class="photo-placeholder-text">Фото 02<br>вид спереди</div>
+        <div class="photo-caption">Вид спереди — Pi Camera, ультразвуковой датчик</div>
+      </div>
+
+      <!-- Фото 3 -->
+      <div class="photo-slot reveal" onclick="openLightbox(this)">
+        <span class="photo-num">03</span>
+        <img src="photo_3.jpg" alt="Робот Анатолий — отсеки сортировки"
+             onerror="this.parentElement.classList.add('empty');this.style.display='none'">
+        <div class="photo-placeholder-icon">📷</div>
+        <div class="photo-placeholder-text">Фото 03<br>отсеки сортировки</div>
+        <div class="photo-caption">Деревянный корпус — 4 отсека для сортировки</div>
+      </div>
+
+      <!-- Фото 4 -->
+      <div class="photo-slot reveal" onclick="openLightbox(this)">
+        <span class="photo-num">04</span>
+        <img src="photo_4.jpg" alt="Робот Анатолий — электроника"
+             onerror="this.parentElement.classList.add('empty');this.style.display='none'">
+        <div class="photo-placeholder-icon">📷</div>
+        <div class="photo-placeholder-text">Фото 04<br>электроника</div>
+        <div class="photo-caption">RPi 3B, L298N, аккумуляторная сборка 18650</div>
+      </div>
+    </div>
+
+    <p class="reveal" style="margin-top:1.5rem;color:var(--muted);font-size:0.76rem;letter-spacing:0.06em;">
+      Чтобы добавить фото — замените <code style="color:var(--green);background:rgba(26,255,122,0.07);padding:0.1em 0.4em;border-radius:3px;">photo_1.jpg</code> …
+      <code style="color:var(--green);background:rgba(26,255,122,0.07);padding:0.1em 0.4em;border-radius:3px;">photo_4.jpg</code> на пути к своим файлам
+    </p>
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<!-- CONTACTS -->
+<section id="contacts">
+  <div class="section-inner">
+    <div class="section-label">Автор проекта</div>
+    <h2 class="section-title reveal">Контакты</h2>
+    <div style="max-width:520px;">
+      <div class="team-card reveal">
+        <div class="team-role">Разработчик · Автор</div>
+        <div class="team-name">Тчанников Алексей</div>
+        <ul class="contact-links">
+          <li><span style="width:22px;text-align:center;">📧</span><a href="mailto:tchannikov@example.ru">tchannikov@example.ru</a></li>
+          <li><span style="width:22px;text-align:center;">💻</span><a href="https://github.com/bobys150" target="_blank">github.com/bobys150</a></li>
+          <li><span style="width:22px;text-align:center;">🏫</span><span>г.о. Домодедово, Московская область</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">АНАТОЛИЙ</div>
+  <div>Проект «Робот Анатолий» · Коттеджные поселки · Московская область</div>
+  <div>2025 · Тчанников Алексей</div>
+</footer>
+
+<script>
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  document.querySelectorAll('.problem-grid .prob-card, .stats-row .stat-box, .photo-grid .photo-slot').forEach((el, i) => {
+    el.style.transitionDelay = (i * 0.1) + 's';
+  });
+
+  function openLightbox(slot) {
+    const img = slot.querySelector('img');
+    if (!img || slot.classList.contains('empty')) return;
+    document.getElementById('lightbox-img').src = img.src;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+</body>
+</html>
