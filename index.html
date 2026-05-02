@@ -314,7 +314,7 @@
   </h1>
 
   <p class="hero-sub">
-    Гусеничный робот для сбора и сортировки мусора в коттеджных поселках.
+    Гусеничный робот для сбора и логистики мусора в коттеджных поселках.
     Вызывается через приложение, подъезжает прямо к дому.
     Управляется из любой точки мира через 4G.
   </p>
@@ -594,17 +594,17 @@
         <div class="section-label">Наше решение</div>
         <h2 class="section-title reveal">Автономный<br>робот-сортировщик</h2>
         <p class="reveal" style="color:var(--muted);font-size:0.92rem;line-height:1.75;">
-          Анатолий вызывается через приложение, самостоятельно подъезжает к дому, забирает мусор и
-          раскладывает его по четырём раздельным отсекам. Корпус из фанеры и PETG-пластика.
+          Анатолий вызывается через приложение, самостоятельно подъезжает к дому и забирает мусор. 
+          Корпус из фанеры и PETG-пластика.
           Управление доступно из любой точки мира через 4G.
         </p>
         <ul class="spec-list reveal">
           <li><span class="ico">⚙️</span><div><strong>Контроллер:</strong> Raspberry Pi 3B + Pi Camera V1</div></li>
           <li><span class="ico">📡</span><div><strong>Связь:</strong> 4G LTE модем — управление откуда угодно</div></li>
-          <li><span class="ico">🔋</span><div><strong>Питание:</strong> 3× 18650 Li-Ion (11.1В последовательно)</div></li>
+          <li><span class="ico">🔋</span><div><strong>Питание:</strong> 3s 18650 Li-Ion (12В последовательно)</div></li>
           <li><span class="ico">🚗</span><div><strong>Движение:</strong> 2× DC 12В, резиновые гусеницы, L298N</div></li>
           <li><span class="ico">📦</span><div><strong>Сортировка:</strong> 4 раздельных отсека, сервопривод MG996R</div></li>
-          <li><span class="ico">🧠</span><div><strong>ИИ:</strong> YOLO Segmentation для распознавания мусора</div></li>
+          <li><span class="ico">🧠</span><div><strong>ИИ:</strong> YOLO Segmentation для автономной навигации</div></li>
         </ul>
         <div class="tech-tags reveal">
           <span class="tag">Python</span>
@@ -698,11 +698,11 @@
       <!-- Фото 1 — замени src на путь к своему файлу -->
       <div class="photo-slot reveal" onclick="openLightbox(this)">
         <span class="photo-num">01</span>
-        <img src="photo_1.jpg" alt="Робот Анатолий — вид сбоку"
+        <img src="photo_1.jpg" alt=""
              onerror="this.parentElement.classList.add('empty');this.style.display='none'">
         <div class="photo-placeholder-icon">📷</div>
-        <div class="photo-placeholder-text">Фото 01<br>вид сбоку</div>
-        <div class="photo-caption">Вид сбоку — гусеничная платформа</div>
+        <div class="photo-placeholder-text">Фото 01<br></div>
+        <div class="photo-caption"></div>
       </div>
 
       <!-- Фото 2 -->
@@ -712,17 +712,17 @@
              onerror="this.parentElement.classList.add('empty');this.style.display='none'">
         <div class="photo-placeholder-icon">📷</div>
         <div class="photo-placeholder-text">Фото 02<br>вид спереди</div>
-        <div class="photo-caption">Вид спереди — Pi Camera, ультразвуковой датчик</div>
+        <div class="photo-caption"></div>
       </div>
 
       <!-- Фото 3 -->
       <div class="photo-slot reveal" onclick="openLightbox(this)">
         <span class="photo-num">03</span>
-        <img src="photo_3.jpg" alt="Робот Анатолий — отсеки сортировки"
+        <img src="photo_3.jpg" alt=""
              onerror="this.parentElement.classList.add('empty');this.style.display='none'">
         <div class="photo-placeholder-icon">📷</div>
-        <div class="photo-placeholder-text">Фото 03<br>отсеки сортировки</div>
-        <div class="photo-caption">Деревянный корпус — 4 отсека для сортировки</div>
+        <div class="photo-placeholder-text">Фото 03<br></div>
+        <div class="photo-caption"></div>
       </div>
 
       <!-- Фото 4 -->
@@ -731,14 +731,12 @@
         <img src="photo_4.jpg" alt="Робот Анатолий — электроника"
              onerror="this.parentElement.classList.add('empty');this.style.display='none'">
         <div class="photo-placeholder-icon">📷</div>
-        <div class="photo-placeholder-text">Фото 04<br>электроника</div>
-        <div class="photo-caption">RPi 3B, L298N, аккумуляторная сборка 18650</div>
+        <div class="photo-placeholder-text">Фото 04<br>/div>
+        <div class="photo-caption"></div>
       </div>
     </div>
 
     <p class="reveal" style="margin-top:1.5rem;color:var(--muted);font-size:0.76rem;letter-spacing:0.06em;">
-      Чтобы добавить фото — замените <code style="color:var(--green);background:rgba(26,255,122,0.07);padding:0.1em 0.4em;border-radius:3px;">photo_1.jpg</code> …
-      <code style="color:var(--green);background:rgba(26,255,122,0.07);padding:0.1em 0.4em;border-radius:3px;">photo_4.jpg</code> на пути к своим файлам
     </p>
   </div>
 </section>
